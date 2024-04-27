@@ -24,6 +24,11 @@ python train.py
 ```
 The dataset is created randomly.
 
+Run TensorBoard:
+```sh
+tensorboard --logdir=logs/fit
+```
+
 Predict:
 ```sh
 python run.py
