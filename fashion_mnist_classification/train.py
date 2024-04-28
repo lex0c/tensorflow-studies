@@ -1,5 +1,6 @@
 import datetime
 import tensorflow as tf
+from tensorflow.keras.callbacks import EarlyStopping
 
 
 log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -24,7 +25,14 @@ model = tf.keras.models.Sequential([
 
 model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
-model.fit(training_images, training_labels, epochs=100, callbacks=[tensorboard_callback])
+early_stopping_callback = EarlyStopping(
+    monitor='val_accuracy',
+    patience=5,
+    verbose=1,
+    restore_best_weights=True
+)
+
+model.fit(training_images, training_labels, epochs=100, verbose=1, callbacks=[early_stopping_callback, tensorboard_callback])
 
 model.evaluate(test_images, test_labels)
 
