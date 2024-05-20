@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def generate_weather_dataset(num_samples=1000):
@@ -32,26 +33,62 @@ def generate_weather_dataset(num_samples=1000):
     return features, labels, list(weather_data.keys())
 
 
-features, labels, labels_raw = generate_weather_dataset(500)
+def plot_metrics(history):
+    metrics = ['loss', 'accuracy', 'precision', 'recall']
+    plt.figure(figsize=(10, 8))
+
+    for n, metric in enumerate(metrics):
+        name = metric.replace("_"," ").capitalize()
+
+        plt.subplot(2,2,n+1)
+        plt.plot(history.epoch, history.history[metric], color='blue', label='Train')
+
+        val_metric = f'val_{metric}'
+
+        if val_metric in history.history:
+            plt.plot(history.epoch, history.history[val_metric], color='green', linestyle="--", label='Val')
+
+        plt.xlabel('Epoch')
+        plt.ylabel(name)
+
+        if metric == 'loss':
+            plt.ylim([0, plt.ylim()[1]])
+        elif metric == 'accuracy':
+            plt.ylim([0,1])
+        else:
+            plt.ylim([0,1])
+
+        plt.legend()
+
+
+features, labels, labels_raw = generate_weather_dataset(5000)
 labels_normalized = tf.keras.utils.to_categorical(labels, num_classes=len(labels_raw))
 
-test_features, test_labels, _ = generate_weather_dataset(50)
+test_features, test_labels, _ = generate_weather_dataset(2000)
 test_labels_normalized = tf.keras.utils.to_categorical(test_labels, num_classes=len(labels_raw))
 
 
 model = tf.keras.models.Sequential([
-    tf.keras.layers.Dense(16, input_shape=(features.shape[1],), activation='relu'),
+    tf.keras.layers.Dense(32, input_shape=(features.shape[1],), activation='relu'),
     tf.keras.layers.Dense(len(labels_raw), activation='softmax')
 ])
 
-model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), loss='categorical_crossentropy', metrics=['accuracy'])
+model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), loss='categorical_crossentropy', metrics=['accuracy', 'precision', 'recall'])
 
-model.fit(features, labels_normalized, epochs=100, batch_size=32)
+history = model.fit(features, labels_normalized, epochs=100, batch_size=64)
 
-test_loss, test_accuracy = model.evaluate(test_features, test_labels_normalized)
+loss, accuracy, precision, recall = model.evaluate(test_features, test_labels_normalized)
 
-print(f"Test Accuracy: {test_accuracy*100:.2f}%")
-print(f"Test Loss: {test_loss*100:.2f}%")
+print(f"Accuracy: {accuracy}")
+print(f"Precision: {precision}")
+print(f"Recall: {recall}")
+print(f"Loss: {loss}")
 
 model.save('weather.keras')
+
+
+plot_metrics(history)
+plt.tight_layout()
+plt.savefig('metrics.png', dpi=300)
+#plt.show()
 
